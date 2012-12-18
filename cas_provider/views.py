@@ -12,7 +12,7 @@ from django.utils.decorators import available_attrs
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.cache import cache_control
 from django.utils.cache import patch_cache_control
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
@@ -70,7 +70,7 @@ def never_cache(view_func):
 
 
 @sensitive_post_parameters()
-@csrf_protect
+@csrf_exempt
 @never_cache
 def login(request, template_name='cas/login.html',
           success_redirect=settings.LOGIN_REDIRECT_URL,
