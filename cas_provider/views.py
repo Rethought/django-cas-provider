@@ -15,6 +15,7 @@ from django.utils.cache import patch_cache_control
 from django.views.decorators.csrf import csrf_protect, csrf_exempt
 
 from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
 from django.conf import settings
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from django.core.urlresolvers import get_callable
@@ -176,8 +177,11 @@ def login(request, template_name='cas/login.html',
                 return HttpResponseRedirect(url)
 
     logging.debug('Rendering response on %s, merge is %s', template_name, merge)
-    return render_to_response(template_name, {'form': form, 'errors': errors}, context_instance=RequestContext(request))
-
+    return TemplateResponse(
+        request,
+        template_name,
+        {'form': form, 'errors': errors}
+    )
 
 @never_cache
 def validate(request):
@@ -220,8 +224,11 @@ def logout(request, template_name='cas/logout.html',
         auth_logout(request)
         if url and auto_redirect:
             return HttpResponseRedirect(url)
-    return render_to_response(template_name, {'url': url},
-        context_instance=RequestContext(request))
+    return TemplateResponse(
+        request,
+        template_name,
+        {'url': url}
+    )
 
 
 @never_cache
