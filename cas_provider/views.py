@@ -46,7 +46,7 @@ ERROR_MESSAGES = (
     (INVALID_SERVICE, u'Service is invalid'),
     (INVALID_REQUEST, u'Not all required parameters were sent.'),
     (INTERNAL_ERROR, u'An internal error occurred during ticket validation'),
-    )
+)
 
 
 logger = logging.getLogger(__name__)
@@ -73,9 +73,15 @@ def never_cache(view_func):
 @sensitive_post_parameters()
 @csrf_exempt
 @never_cache
-def login(request, template_name='cas/login.html',
+def login(request,
+          template_name='cas/login.html',
           success_redirect=settings.LOGIN_REDIRECT_URL,
-          warn_template_name='cas/warn.html', **kwargs):
+          warn_template_name='cas/warn.html',
+          extra_context={},
+          **kwargs):
+    """
+
+    """
     merge = kwargs.get('merge', False)
     logging.debug('CAS Provider Login view. Method is %s, merge is %s, template is %s.',
                   request.method, merge, template_name)
@@ -87,8 +93,8 @@ def login(request, template_name='cas/login.html',
         request.session['service'] = service
 
     user = request.user
-
     errors = []
+    context = {}
 
     if request.method == 'POST':
         if merge:
@@ -161,12 +167,16 @@ def login(request, template_name='cas/login.html',
                 return HttpResponseRedirect(success_redirect)
             else:
                 if request.GET.get('warn', False):
-                    return render_to_response(warn_template_name, {
-                        'service': service,
-                        'warn': False
-                    }, context_instance=RequestContext(request))
+                    return TemplateResponse(
+                        request,
+                        warn_template_name,
+                        {
+                            'service': service,
+                            'warn': False
+                        }
+                    )
 
-                # Create a service ticket and redirect to the service.
+                # LOGIN PASSED - Create a service ticket and redirect to the service.
                 ticket = ServiceTicket.objects.create(service=service, user=user)
                 if 'service' in request.session:
                     # Don't need this any more.
@@ -176,11 +186,15 @@ def login(request, template_name='cas/login.html',
                 logging.debug('Redirecting to %s', url)
                 return HttpResponseRedirect(url)
 
+    context['form'] = form
+    context['errors'] = errors
+    context.update(extra_context)
+
     logging.debug('Rendering response on %s, merge is %s', template_name, merge)
     return TemplateResponse(
         request,
         template_name,
-        {'form': form, 'errors': errors}
+        context
     )
 
 @never_cache
