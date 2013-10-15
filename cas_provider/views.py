@@ -92,7 +92,7 @@ def login(request,
         # in one of the more complicated workflows.
         request.session['service'] = service
 
-    if service is None and request.session['service']:
+    if service is None and 'service' in request.session:
         # Assign the service back for form use if we have it
         service = request.session['service']
 
