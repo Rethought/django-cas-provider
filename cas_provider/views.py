@@ -107,6 +107,22 @@ def login(request,
             form = LoginForm(request.POST, request=request)
 
         if form.is_valid():
+
+            failed_logins = FailedLoginTracking.objects.filter(
+                username=form.cleaned_data['email'],
+                login_attempt__gte=datetime.now() - timedelta(minutes=5)).count()
+
+            if failed_logins >= 5:
+                context['too_many_attempts'] = True
+                context.update(extra_context)
+
+                logging.debug('Rendering response on %s, merge is %s', template_name, merge)
+                return TemplateResponse(
+                    request,
+                    template_name,
+                    context
+                )
+
             service = form.cleaned_data.get('service', None)
             try:
                 auth_args = dict(username=form.cleaned_data['email'],
@@ -138,6 +154,7 @@ def login(request,
 
             if user is None:
                 errors.append('Incorrect username and/or password.')
+                FailedLoginTracking.objects.create(username=form.cleaned_data['email'])
             else:
                 if user.is_active:
                     auth_login(request, user)
