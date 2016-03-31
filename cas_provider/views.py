@@ -27,7 +27,7 @@ from django.core.urlresolvers import reverse
 from lxml import etree
 from cas_provider.attribute_formatters import NSMAP, CAS
 from cas_provider.models import ProxyGrantingTicket, ProxyTicket
-from cas_provider.models import ServiceTicket
+from cas_provider.models import ServiceTicket, FailedLoginTracking
 
 from cas_provider.exceptions import SameEmailMismatchedPasswords
 from cas_provider.forms import LoginForm, MergeLoginForm
