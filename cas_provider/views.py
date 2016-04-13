@@ -113,8 +113,9 @@ def login(request,
                 username=form.cleaned_data['email'],
                 login_attempt__gte=datetime.now() - timedelta(minutes=5)).count()
 
-            if failed_logins >= 5:
+            if failed_logins >= 4:
                 context['too_many_attempts'] = True
+                context['form'] = form
                 context.update(extra_context)
 
                 logging.debug('Rendering response on %s, merge is %s', template_name, merge)
