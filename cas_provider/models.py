@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 from random import Random
 import string
 import urllib
@@ -35,8 +36,8 @@ class BaseTicket(models.Model):
 
 
 class ServiceTicket(BaseTicket):
-    user = models.ForeignKey(User, verbose_name=_('user'))
-    service = models.URLField(_('service'), verify_exists=False)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'))
+    service = models.URLField(_('service'))
 
     prefix = 'ST'
 
