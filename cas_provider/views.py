@@ -430,7 +430,14 @@ def get_model_instance_attributes(instance):
         if field.__class__ not in IGNORE_FIELDS:
             value = getattr(instance, field.name)
             if value is not None:
-                attributes[field.name] = str(value)
+                try:
+                    if isinstance(value, unicode):
+                        new_val = str(value.encode('ascii', 'xmlcharrefreplace'))
+                    else:
+                        new_val = str(value).encode('ascii', 'xmlcharrefreplace')
+                    attributes[field.name] = new_val
+                except Exception as e:
+                    pass
     return attributes
 
 
