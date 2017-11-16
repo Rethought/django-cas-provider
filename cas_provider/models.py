@@ -97,3 +97,7 @@ class ProxyGrantingTicketIOU(BaseTicket):
         verbose_name = _('Proxy Granting Ticket IOU')
         verbose_name_plural = _('Proxy Granting Tickets IOU')
 
+
+class FailedLoginTracking(models.Model):
+    username = models.CharField(max_length=200)
+    login_attempt = models.DateTimeField(auto_now_add=True)

@@ -7,6 +7,7 @@ from urllib import urlencode
 import urllib2
 import urlparse
 from functools import wraps
+from datetime import datetime, timedelta
 
 from django.utils.decorators import available_attrs
 from django.views.decorators.debug import sensitive_post_parameters
@@ -27,7 +28,7 @@ from django.core.urlresolvers import reverse
 from lxml import etree
 from cas_provider.attribute_formatters import NSMAP, CAS
 from cas_provider.models import ProxyGrantingTicket, ProxyTicket
-from cas_provider.models import ServiceTicket
+from cas_provider.models import ServiceTicket, FailedLoginTracking
 
 from cas_provider.exceptions import SameEmailMismatchedPasswords
 from cas_provider.forms import LoginForm, MergeLoginForm
@@ -107,6 +108,23 @@ def login(request,
             form = LoginForm(request.POST, request=request)
 
         if form.is_valid():
+
+            failed_logins = FailedLoginTracking.objects.filter(
+                username=form.cleaned_data['email'],
+                login_attempt__gte=datetime.now() - timedelta(minutes=5)).count()
+
+            if failed_logins >= 4:
+                context['too_many_attempts'] = True
+                context['form'] = form
+                context.update(extra_context)
+
+                logging.debug('Rendering response on %s, merge is %s', template_name, merge)
+                return TemplateResponse(
+                    request,
+                    template_name,
+                    context
+                )
+
             service = form.cleaned_data.get('service', None)
             try:
                 auth_args = dict(username=form.cleaned_data['email'],
@@ -138,6 +156,7 @@ def login(request,
 
             if user is None:
                 errors.append('Incorrect username and/or password.')
+                FailedLoginTracking.objects.create(username=form.cleaned_data['email'])
             else:
                 if user.is_active:
                     auth_login(request, user)
